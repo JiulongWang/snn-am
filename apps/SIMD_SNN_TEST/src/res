@@ -1,0 +1,48 @@
+#include "snn.h"
+#include "snn_portme.h"
+
+void nuTest(){
+    __rv_stau(4);
+    us16x4_t nu = {0, 0, 0, 0};
+    us16x4_t s = {100, 100, 100, 100};
+    for(int i = 0; i < 2; i++){
+        nu = __rv_nup(nu, s, 0);
+        printf("%x %x %x %x\n", nu[0], nu[1], nu[2], nu[3]);
+    }
+}
+
+int main(){
+
+    __rv_stau(4);
+    us16x4_t nu = {0, 0, 0, 0};
+    us16x4_t s = {100, 100, 100, 100};
+    for(int i = 0; i < 2; i++){
+        nu = __rv_nup(nu, s, 0);
+        printf("%x %x %x %x\n", nu[0], nu[1], nu[2], nu[3]);
+    }
+    /*
+    printf("Neural Intr test\n");
+    SUCCESS_MSG;
+
+    printf("Synapse and Calc Intr test\n");
+    SUCCESS_MSG;
+
+    printf("Setting Intr test\n");
+    SUCCESS_MSG;
+*/
+    return 0;
+}
+
+void rvSNNsetTest(){
+    __rv_slr(rand());
+    __rv_sacc(rand());
+    __rv_stau(rand());
+    __rv_svr(rand());
+}
+
+void rvExpTest(){
+    us16x4_t a = {WEIGHT_FIX_POINT(2), 0, 0, 0};
+    us16x4_t b = {0, 0, 0, 0};
+    b = __rv_exp(a);
+    printf("b0 %x b1 %x b2 %x b3 %x\n", b[0], b[1], b[2], b[3]);
+}

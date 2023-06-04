@@ -10,4 +10,7 @@ void nemu_assert(int cond) {
   if (!cond) _halt(1);
 }
 
+double Exp(double);
+double Fabs(double);
+
 #endif

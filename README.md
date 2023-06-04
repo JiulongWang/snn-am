@@ -1,46 +1,298 @@
-# The Abstract Machine (AM)
+# RV-SNN2Ö¸Áî¼¯À©Õ¹ËµÃ÷
 
-## æ³¨æ„
+## Ä¿Â¼
+[TOC]
 
-è¿™æ˜¯ä¸€ä¸ªä¸´æ—¶çš„ä»“åº“ï¼Œä»…ç”¨äºæ”¯æŒNutShellè¿è¡Œä¸€äº›åŸºæœ¬çš„ç¨‹åºã€‚
+## ¼ò½é
 
-AMé¡¹ç›®æ˜¯[å—äº¬å¤§å­¦è®¡ç®—æœºç³»è‹¥å¹²è¯¾ç¨‹å®éªŒ](https://github.com/NJU-ProjectN/)çš„ä¸€éƒ¨åˆ†ï¼Œ
-æœ¬ä»“åº“å°†ä¸è¯¾ç¨‹ä½œä¸šç›¸å…³çš„è‹¥å¹².cæ–‡ä»¶æ›¿æ¢æˆ.oæ–‡ä»¶ï¼Œå…·ä½“åŒ…æ‹¬
+RV-SNN2À©Õ¹Ö¸ÁîÊÇ»ùÓÚRISC-V¼Ü¹¹Ë«·¢ÉäË³Ğò´¦ÀíÆ÷[Polaris](https://github.com/ByeBeihai/Polaris)ÊµÏÖµÄ¡£ÔÚÕâ¸öÍ¨ÓÃ´¦ÀíÆ÷ÖĞ£¬ÎÒÃÇ¼ÓÈëÁËÒ»¸ö¿ÉÅäÖÃµÄÂö³åÉñ¾­ÍøÂç¼ÓËÙÄ£¿éÀ´ÊµÏÖRV-SNN2À©Õ¹Ö¸Áî¡£
+
+RV-SNN2Ö÷ÒªÓĞ6ÌõÖ¸Áî£¬·ÖÎªÈıÀà£º
+
+- Éñ¾­Ôª¸üĞÂÖ¸Áî£ºNUP
+- Í»´¥¿ÉËÜĞÔÓëÍ¨ÓÃ¼ÆËãÖ¸Áî£ºTDR BPO EXP SUM16
+- Éñ¾­ÍøÂçÅäÖÃÖ¸Áî£ºSVR
+
+|No.|Öú¼Ç·û|ÃèÊö|²Ù×÷|
+|:-:|:--|:--|:--|
+|1|NUP rd, rs1, rs2|16±ÈÌØÉñ¾­Ôª¸üĞÂ|if ts_flag=1:<br>&emsp;&emsp;rd.H[i]=rs1.H[x]<br>&emsp;&emsp;rd.L[x]=NUP(rs1.L[x], rs2[x])<br>else:<br>&emsp;&emsp;rd[x]=NUP(rs1[x], rs2[x])<br>(x=3..0)|
+|2|TDR rd, rs1, rs2|Ê±¼äÒÀÀµ¹æÔòÖ¸Áî|rd[x]=rs1.H[x]-rs2.H[x]|
+|3|BPO rd, rs1, rs2|·´Ïò´«²¥Êä³ö·½Ïò²ÎÊı¼ÆËãÖ¸Áî|if rs2[x]=0:<br>&emsp;&emsp;rd[x]=rs1[x]==1?-1:0<br>else if rs2[x]=1:<br>&emsp;&emsp;rd[x]=rs1[x]==1?1:0<br>(x=3..0)|
+|4|EXP rd,rs1|Ö¸Êıº¯ÊıÔËËãÖ¸Áî|rd[x]=exp(rs1[x])|
+|5|SUM16 rd, rs1, rs2|16±ÈÌØÀÛ¼ÓÖ¸Áî|if `acc_flag`=1:<br>for x in [0,3]:<br>&emsp;&emsp;rd += rs2[x]==1?rs1[x]:0<br>else:<br>for x in [0,3]:<br>&emsp;&emsp;tmp += rs2[x]==1?rs1[x]:0<br>&emsp;&emsp;rd = tmp + `sum_accumulate`<br>(x=3..0)|
+|6|SVR rd, rs1, rs2|Éñ¾­ÍøÂçÅäÖÃÖ¸Áî|ÅäÖÃSNNUÄÚ²¿SRF¼Ä´æÆ÷×é:<br>$V_{reset}$=rs1[0];<br>$\mu$=rs1[1];<br>$\tau$=rs1[2];<br>`sum_accumulate`=rs2|
+
+## Ö¸ÁîÏ¸½Ú
+
+### Éñ¾­Ôª¸üĞÂÖ¸Áî
+
+Éñ¾­Ôª¸üĞÂÖ¸Áî(Neuron Update)ÖĞ£¬`rs1`Ö¸¶¨´æÓĞ4¸ö16 bitÉñ¾­ÔªµÄ¼Ä´æÆ÷£¬`rs2`Ö¸¶¨´æÓĞ4¸öÉñ¾­ÔªÊäÈëµÄ¼Ä´æÆ÷£¬`ts_flag`Ö¸Ê¾Éñ¾­ÔªÊı¾İÊÇ·ñ´øÓĞÊ±¼ä´ÁÊı¾İ¡£
+
+| |`ts_flag`=1|`ts_flag`=0|
+|:-- |:---|:---|
+|rs1[15:8]|`Ê±¼ä´ÁÊı¾İ[7:0]`|`Éñ¾­ÔªÄ¤µçÎ»[15:8]`|
+|rs1[7:0]|`Éñ¾­ÔªÄ¤µçÎ»[7:0]`|`Éñ¾­ÔªÄ¤µçÎ»[7:0]`|
+
+Éñ¾­Ôª¸üĞÂÖ¸ÁîÊ¹ÓÃÈçÏÂ¹«Ê½½øĞĞLIFÄ£ĞÍµÄ¸üĞÂ£º
+
+$$
+V_{next}=V+dV=V-(V>>\tau)+((V_{rest}+\sum{wS})>>\tau)
+$$
+
+ÆäÖĞ$V$Îªµ±Ç°Ä¤µçÎ»£¬$\tau$ÎªLIFÉñ¾­ÔªÊ±¼ä³£Êı£¬$\sum{wS}$ÎªÊäÈëÂö³åÓëÆä´«µİÍ»´¥È¨ÖØµÄ³Ë»ıÖ®ºÍ¡£
+
+º¯Êı½Ó¿ÚÈçÏÂ:
+
+```c
+us16x4_t __rv_nup(us16x4_t rs1, us16x4_t rs2, uint8_t hasTs);
 ```
-libs/klib/src/{stdio,stdlib,string}.o
+
+---
+
+### Ê±¼äÒÀÀµ¹æÔòÖ¸Áî
+
+Ê±¼äÒÀÀµ¹æÔòÖ¸Áî(Time Dependence Rule)ÖĞ£¬rs1¡¢rs2·Ö±ğÖ¸¶¨ÁË´æÓĞ´øÊ±¼ä´ÁµÄ4¸öÉñ¾­ÔªÊı¾İ£¬TDRÖ¸ÁîÖ»»á¼ÆËãÊ±¼ä´ÁµÄ²îÖµ£¬Éñ¾­ÔªÄ¤µçÎ»²»»á²ÎÓë¼ÆËã¡£
+
+º¯Êı½Ó¿ÚÈçÏÂ:
+
+```c
+us16x4_t  __rv_tdr(us16x4_t rs1, us16x4_t rs2);
 ```
 
-upstreamæ­£åœ¨é‡æ„ï¼Œé¢„è®¡å¯åœ¨2020/09/01å‰å®Œæˆé‡æ„ï¼Œå±Šæ—¶å†ä»upstreamä¸­forkä¸€ä¸ªåˆ†æ”¯æ¥æ”¯æŒNutShellã€‚
+---
 
-## ä»‹ç»
+### ·´Ïò´«²¥Êä³ö·½Ïò²ÎÊı¼ÆËãÖ¸Áî
 
-æŠ½è±¡è®¡ç®—æœºï¼šå¿…è¦çš„æŠ½è±¡ï¼Œå¸®ä½ ç¼–å†™ä¸€ä¸ªå®Œæ•´çš„è®¡ç®—æœºç³»ç»Ÿï¼
+·´Ïò´«²¥Êä³ö·½Ïò²ÎÊı¼ÆËãÖ¸Áî(Back-Propagation Output direction parameter)¸ù¾İÈçÏÂ¹«Ê½¶ÔÊä³ö²ÎÊı$\xi_o$½øĞĞÇó½â£º
 
-ç›®å½•ç»„ç»‡ï¼š
+ $$
+ \xi_o=
+ \begin{cases}
+ 1& \text{µ±Ä¿±êÉñ¾­ÔªÔÚ[t-4,t]Ê±¼äÄÚ²»·¢·Å}\\
+ -1& \text{µ±·ÇÄ¿±êÉñ¾­ÔªÔÚ[t-4,t]Ê±¼äÄÚ·¢·Å}\\
+ 0& \text{ÆäËûÇé¿ö}
+ \end{cases}
+ $$
 
-* `am/`ï¼šAMå¤´æ–‡ä»¶ã€æ¯ä¸ªä½“ç³»ç»“æ„åˆ†åˆ«å®ç°çš„AMä»£ç ã€‚
-* `libs/`ï¼šå»ºç«‹åœ¨AMä¸Šã€ä½“ç³»ç»“æ„æ— å…³çš„è¿è¡Œåº“ï¼Œå¦‚è½¯ä»¶æ¨¡æ‹Ÿæµ®ç‚¹æ•°ã€åŸºç¡€libcåŠŸèƒ½ç­‰ã€‚
-* `apps/`ï¼šä¸€äº›è¿è¡Œåœ¨AMä¸Šåº”ç”¨ç¨‹åºç¤ºä¾‹ã€‚
-* `tests/`: ç”¨æ¥æµ‹è¯•AMå®ç°çš„ç®€å•æµ‹è¯•ç¨‹åºã€‚
+ÔÚÖ¸ÁîÖĞ£¬rs1Ö¸¶¨4¸öÉñ¾­ÔªµÄ·¢·Å½á¹û£¬rs2Ö¸¶¨Ä¿±êÉñ¾­Ôª£¨rs2[x]=1±íÊ¾µ±Ç°Éñ¾­ÎªÄ¿±êÉñ¾­Ôª£©¡£
 
-## åˆ›å»ºä¸€ä¸ªAMåº”ç”¨
+º¯Êı½Ó¿ÚÈçÏÂ:
 
-åœ¨ä»»ä½•ç›®å½•éƒ½å¯ä»¥åˆ›å»ºè¿è¡Œåœ¨AMä¸Šçš„åº”ç”¨ç¨‹åºã€‚ç¨‹åºç”¨C/C++è¯­è¨€ç¼–å†™ï¼Œé™¤AMä¹‹å¤–æ— æ³•è°ƒç”¨å…¶ä»–åº“å‡½æ•°ï¼ˆä½†å¯ä»¥å¼•ç”¨`stdarg.h`, `limits.h`ç­‰åŒ…å«ä½“ç³»ç»“æ„ç›¸å…³æ•°æ®å®šä¹‰çš„å¤´æ–‡ä»¶ï¼‰ã€‚
-
-ä¸ºæ­¤ä½ éœ€è¦åœ¨åº”ç”¨ç¨‹åºé¡¹ç›®çš„æ ¹ç›®å½•æ·»åŠ ä¸€ä¸ªMakefileï¼š
-
-```
-NAME = app-name
-SRCS = src/main.c src/help.c src/lib.cpp
-include $(AM_HOME)/Makefile.app
+```c
+us16x4_t __rv_bpo(us16x4_t rs1, us16x4_t rs2);
 ```
 
-ä¸€äº›æ³¨æ„äº‹é¡¹ï¼š
+---
 
-* `NAME`å®šä¹‰äº†åº”ç”¨çš„åå­—ã€‚ç¼–è¯‘åä¼šåœ¨`build/`ç›®å½•é‡Œå‡ºç°ä»¥æ­¤å‘½åçš„åº”ç”¨ç¨‹åºã€‚
-* `SRCS`æŒ‡å®šäº†ç¼–è¯‘åº”ç”¨æ‰€éœ€çš„æºæ–‡ä»¶ã€‚å¯ä»¥æ”¾åœ¨åº”ç”¨ç›®å½•ä¸­çš„ä»»æ„ä½ç½®ã€‚
+### Ö¸Êıº¯Êı¼ÆËãÖ¸Áî
 
-* åº”ç”¨ç›®å½•ä¸‹çš„`include/`ç›®å½•ä¼šè¢«æ·»åŠ åˆ°ç¼–è¯‘çš„`-I`é€‰é¡¹ä¸­ã€‚
-* ç¯å¢ƒå˜é‡`AM_HOME`éœ€è¦åŒ…å«**nexus-amé¡¹ç›®çš„æ ¹ç›®å½•çš„ç»å¯¹è·¯å¾„**ã€‚
+Ö¸Êıº¯Êı¼ÆËãÖ¸Áî(EXPonential function calculation)Ö§³ÖÍ¬Ê±¼ÆËã4¸ö16±ÈÌØµÄ¶¨µãÊı¶ÔÓ¦µÄÖ¸Êıº¯ÊıÖµ¡£Ä¿Ç°ÊÕÁ²Óò·¶Î§Îª$\theta\in[-2.0794,2.0794]$,Ò²¾ÍÊÇËµ£¬ÔÚÕâ¸ö·¶Î§ÄÚÇó³öµÄÖ¸Êıº¯ÊıÖµÊÇÓĞÒâÒåµÄ¡£
 
-ç¼–è¯‘æ—¶ï¼Œé¦–å…ˆç¡®ä¿`AM_HOME`æ­£ç¡®è®¾ç½®ï¼Œç„¶åæ‰§è¡Œ`make ARCH=ä½“ç³»ç»“æ„å`ç¼–è¯‘ã€‚ä¾‹å¦‚`make ARCH=native`å°†ä¼šç¼–è¯‘æˆæœ¬åœ°å¯è¿è¡Œçš„é¡¹ç›®ï¼Œ`make ARCH=mips32-minimal`ç”Ÿæˆç”¨äºä»¿çœŸçš„MIPS32ç¨‹åºã€‚`ARCH`ç¼ºçœæ—¶é»˜è®¤ç¼–è¯‘åˆ°æœ¬åœ°ã€‚
+|16±ÈÌØ¶¨µãÊı`n`|`n[15]`|`n[14:11]`|`n[10:0]`|
+|:-:|:-:|:-:|:-:|
+|ÃèÊö|·ûºÅÎ»|ÕûÊıÎ»|Ğ¡ÊıÎ»|
+
+º¯Êı½Ó¿ÚÈçÏÂ:
+
+```c
+us16x4_t __rv_exp(us16x4_t rs1);
+```
+
+---
+
+### 16±ÈÌØÊıÇóºÍÖ¸Áî
+
+16±ÈÌØÊıÇóºÍÖ¸Áî(SUM16)ÖĞ£¬`acc_flag`ÓÃÓÚÖ¸Ê¾SRF¼Ä´æÆ÷ÖĞµÄÀÛ¼Ó¼Ä´æÆ÷ÊÇ·ñ²ÎÓë¼ÆËã£¬Èô`acc_flag=1`Ôò²ÎÓëµ½ÀÛ¼Ó¼ÆËãÖĞ£¬·ñÔò²»²ÎÓëÀÛ¼Ó¡£×îºóÖ¸ÁîÊä³öµÄÊÇÒ»¸ö64Î»Êı¡£
+
+º¯Êı½Ó¿ÚÈçÏÂ:
+
+```c
+us16x4_t __rv_exp(us16x4_t rs1);
+```
+
+---
+
+### ÍøÂç²ÎÊıÅäÖÃÖ¸Áî
+
+ÍøÂç²ÎÊıÅäÖÃÖ¸Áî(Set Reset Value)ÖĞ£¬`rs1`Ö¸¶¨°üº¬ÁËÉñ¾­Ôª³õÊ¼Ä¤µçÎ»$V_{rest}$¡¢Ê±¼ä³£Êı$\tau$ÒÔ¼°Í»´¥¿ÉËÜĞÔÑ§Ï°ÂÊ$\mu$¡£
+
+|`rs1`|`rs1[0]`|`rs1[1]`|`rs1[2]`|`rs1[3]`|
+|:-:|:-:|:-:|:-:|:-:|
+|ÔªËØ|$V_{rest}$|$\mu$|$\tau$|reverse|
+
+---
+## ±à³ÌÖ¸µ¼
+
+### Ö¸ÁîµÄÒıÈë
+
+¶ÔÓÚSNNÀ©Õ¹£¬ÎÒÃÇÌá¹©ÁËº¯ÊıÊ½µÄÄÚÁª»ã±à½Ó¿Ú¡£Í¨¹ı¿ËÂ¡[AM²Ö¿â](https://github.com/OSCPU/nexus-am)²Ö¿â£¬ÔÚ`apps/`Ä¿Â¼ÏÂĞÂ½¨ÄãµÄ¹¤³Ì£¬ÔÚ³ÌĞòÔ´´úÂëÖĞ¼ÓÈë`snn.h`µÄÒıÈë¾Í¿ÉÒÔÍ¨¹ıº¯Êıµ÷ÓÃµÄ·½Ê½µ÷ÓÃÀ©Õ¹Ö¸Áî¡£
+
+[Ö¸ÁîÏ¸½Ú](#Ö¸ÁîÏ¸½Ú)Ò»ÕÂÖĞÌá³öµÄÄÚ½¨º¯Êı½Ó¿Ú¶¼¶¨ÒåÔÚ`snn.h`ÖĞ£¬Äã¿ÉÒÔ¸´ÖÆÒÔÏÂ´úÂëÊµÏÖ`snn.h`
+
+```c
+// snn.h
+#ifndef __SNN_H__
+#define __SNN_H__
+
+#include <am.h>
+#include <klib.h>
+#include <klib-macros.h>
+
+#define SEED 1
+
+typedef unsigned short us16x4_t __attribute__((vector_size (8)));
+typedef unsigned char  us8x8_t __attribute__ ((vector_size (8)));
+
+uint64_t __rv_svr(us16x4_t taulrvr, uint64_t acc){
+    uint64_t ret;
+    asm volatile(
+        ".insn r 0xb, 0x7, 0x3, %0, %1, %2"
+            :"=r"(ret)
+            :"r"(taulrvr), "r"(acc)
+    );
+    return ret;
+}
+
+/*SUM: 4 16-bit data accumulation, with/without acc register*/
+uint64_t __rv_sum( us16x4_t rs, us16x4_t masks, uint8_t hasAcc){
+
+    uint64_t ret;
+    if(hasAcc == 1){
+        asm volatile(
+            ".insn r 0xb, 0x5, 0x1, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs),"r"(masks)
+        );
+    }
+    else{
+        asm volatile(
+            ".insn r 0xb, 0x5, 0x0, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs),"r"(masks)
+        );
+    }
+    
+    return ret;
+}
+
+
+/*NUP: neuron update, with/without timestamp*/
+us16x4_t __rv_nup(us16x4_t rs1, us16x4_t rs2, uint8_t hasTs){
+    us16x4_t ret;
+    if(hasTs == 1){
+        asm volatile(
+            ".insn r 0xb, 0x0, 0x1, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs1),"r"(rs2)
+        );
+    }
+    else{
+        asm volatile(
+            ".insn r 0xb, 0x0, 0x0, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs1),"r"(rs2)
+        );
+    }
+    
+    return ret;
+}
+
+/*EXP: calculate exp function with 4 value*/
+us16x4_t __rv_exp(us16x4_t rs1){
+    us16x4_t ret;
+    asm volatile(
+            ".insn r 0xb, 0x2, 0x0, %0, %1, x0"
+                :"=r"(ret)
+                :"r"(rs1)
+        );
+    return ret;
+}
+
+us16x4_t  __rv_tdr(us16x4_t rs1, us16x4_t rs2){
+    us16x4_t ret;
+    asm volatile(
+            ".insn r 0xb, 0x4, 0x0, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs1), "r"(rs2)
+        );
+    return ret;
+}
+
+/*BPO: back-propagation output-hidden ksi calculation*/
+us16x4_t __rv_bpo(us16x4_t rs1, us16x4_t rs2){
+    us16x4_t ret;
+    asm volatile(
+            ".insn r 0xb, 0x1, 0x1, %0, %1, %2"
+                :"=r"(ret)
+                :"r"(rs1), "r"(rs2)
+        );
+    return ret;
+}
+
+#define WEIGHT_FIX_POINT(x) x * 4096
+#define NU16_FIX_POINT(x) x * 256
+
+#define SUCCESS_MSG \
+    printf("*****************\n");\
+    printf("TEST PASSED!\n");\
+    printf("*****************\n\n")
+
+#define FAIL_MSG \
+    printf("*****************\n");\
+    printf("TEST FAILED!\n");\
+    printf("*****************\n\n")
+
+#endif /*__SNN_H__*/
+
+```
+
+### Àı×Ó
+
+Õâ²¿·Ö½ØÓÚÖ¸Áî¹¦ÄÜ²âÊÔ³ÌĞòÖĞµÄÉñ¾­Ôª¸üĞÂ²¿·Ö
+
+```c
+// NUP test
+    #if !__DEBUG__
+    uint32_t n = 100;
+    #endif
+    #if __NUP_TEST__
+    printf("Neural without Time Stamp Intr test\n");
+    us16x4_t taulrvr = {0, 0, 4, 0};
+    uint32_t tau = 4;
+    __rv_svr(taulrvr, 0); // ÉèÖÃÍøÂç²ÎÊı rs1:{0:vr, 1:lr, 2:tau, 3:±£ÁôÈ«0} rs2:0
+    us16x4_t nu_without_ts = {0, 0, 0, 0}; 
+    us16x4_t s_without_ts = {100, 100, 100, 100};
+    uint16_t nu_without_ts_ref[4] = {0, 0, 0, 0};
+    for(int i = 0; i < n; i++){
+        nu_without_ts = __rv_nup(nu_without_ts, s_without_ts, 0); // NUP Ö¸Áî£¬×îºóÒ»¸ö²ÎÊıÎªts_flag
+        for (int j = 0; j < 4; j++){
+            nu_without_ts_ref[j] = nu_without_ts_ref[j] + (s_without_ts[j] >> tau) - (nu_without_ts_ref[j] >> tau);
+            
+            if(nu_without_ts[j] != nu_without_ts_ref[j]){
+                FAIL_MSG;
+                printf("%x \n", nu_without_ts[j]);
+                printf("%x \n", nu_without_ts_ref[j]);
+                return 0;
+            }
+        }
+    }
+    SUCCESS_MSG;
+    printf("Neural with Time Stemp Intr test\n");
+    us16x4_t nu_with_ts = {0, 0, 0, 0};
+    us16x4_t s_with_ts = {100, 100, 100, 100};
+    uint16_t nu_withTS_ref[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    for (int i = 0; i < n; i++){
+        nu_with_ts = __rv_nup(nu_with_ts, s_with_ts, 1); // NUP Ö¸Áî£¬ts_flag = 1
+        for(int j = 0; j < 4; j++){
+            nu_withTS_ref[j * 2 + 1] = nu_withTS_ref[j * 2 + 1] + (s_with_ts[j] >> tau) - (nu_withTS_ref[j * 2 + 1] >> tau);
+            if(nu_with_ts[j] != nu_withTS_ref[j * 2 + 1] + (nu_withTS_ref[j * 2] << 8)){
+            FAIL_MSG;
+            printf("%x \t", nu_with_ts[j]);
+            printf("%x %x %x\n", nu_withTS_ref[j], nu_withTS_ref[j *2 +1], nu_withTS_ref[j * 2 + 1] + (nu_withTS_ref[j] << 8));
+            return 0;
+            }
+        }    
+    }
+    SUCCESS_MSG;
+    #endif
+```
