@@ -1,5 +1,15 @@
 # The Spiking Neural Network Unit in Wenquxing23
 
+## Contents
+
+* [0 Introduction](#0-introduction)
+* [1 SNN Instruction Extensions](#1-snn-instruction-extensions)
+* [2 Overall View of SNN Unit](#2-overall-view-of-snn-unit)
+* [3 SNN Issue Unit](#3-snn-issue-unit)
+* [4 Lif Neural Unit](#4-lif-neural-unit)
+* [5 Synapse Unit](#5-synapse-unit)
+* [6 Configure SNNU in Wenquxing23](#6-configure-snnu-in-wenquxing23)
+
 ## 0 Introduction
 
 Wenquxing23 is a low power consumption SNN processor which is integrated with an
@@ -11,7 +21,9 @@ Wenquxing23 is a low power consumption SNN processor which is integrated with an
 
 ## 1 SNN Instruction Extensions
 
-Please Check [this document](./InstrInfo.md) for detail.
+Please Check [this document](./InstrInfo_en.md) for detail.
+
+中文版请查看这个[文档](./InstrInfo_zh.md)。
 
 ---
 
@@ -20,6 +32,8 @@ Please Check [this document](./InstrInfo.md) for detail.
 The Spiking Neural Network Unit (SNNU) is integrated into the pipeline of `Polaris`
  Processor as a sub-component with a configurable number of issues.
  This component has a two-stage pipeline: Issue stage and Executive stage.
+
+![structure-2way](./fig/structure-TOP.png)
 
 SNNU includes three parts:
 
@@ -41,6 +55,8 @@ An SNN register file (SRF) is integrated into SNNISU for temporarily
  storing some useful parameters.
  The data in SRF will not participate in the computing of other components,
  which means, in other words, the data of SRF is only valid in SNNU.
+
+![Structure-ISU](./fig/structure-ISU.png)
 
 ---
 
@@ -70,6 +86,8 @@ There are two structures for membrane potential $V$: with or without Time Stamp.
 
 The LNU can handle these two structures, which can be configured by setting the
 `ts_flag` to `1`.
+
+![LNU](./fig/structure-LNU.png)
 
 ---
 
@@ -114,3 +132,6 @@ Both SNNU and SNN instruction extensions can be configured
  only handles one instruction once;
 - when `Polaris_SNN_WAY_NUM = 2`, the project will generate two-way SNNU which
  handles two instructions once.
+
+
+> If has any question please contact [author](mailto:dyingmail@163.com)
